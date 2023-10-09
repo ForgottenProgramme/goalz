@@ -1,5 +1,8 @@
 import argparse
 import json
+from json.decoder import JSONDecodeError
+import os
+
 
 from pathlib import Path
 
@@ -8,16 +11,29 @@ HELP_MESSAGE ="To add a new goal to your goals list, type 'add <goal>'.\n To upd
 
 
 def add_goal(goal_name: str, goal_file)-> None:
-    with goal_file.open("r") as f:
-        content=json.load(f)
-    if content[goal_name]:
-        print(f"Goal '{goal_name}' already present in goal set. Update the goal instead.")
-        return
+    if goal_file.exists():
+        if os.stat(goal_file).st_size == 0:
+            with goal_file.open("w") as f:
+                content={goal_name: 0}
+                json.dump(content,f)
+                print(f"Added goal {goal_name} to goals file.\n")
+        else:
+            with goal_file.open("r") as f:
+                content=json.load(f)
+                if content.get(goal_name):
+                    print(f"Goal '{goal_name}' already present in goal set. Update the goal instead.")
+                    return
+                else:
+                    content[goal_name]=0
+                    with goal_file.open("w") as f:
+                        json.dump(content,f)
+                    print(f"Added goal {goal_name} to goals file.\n")                        
     else:
+        print("Creating a new goal file to record your goals.\n")
         goal = {goal_name: 0}
         with goal_file.open("w") as f:
             json.dump(goal, f)
-        print(f"Added goal {goal} to the goals list.")
+        print(f"Added goal {goal} to the goals file.")
 
 
 def update_progress(goal: dict, goal_file):
@@ -39,8 +55,8 @@ def update_progress(goal: dict, goal_file):
 def display_goal_list(goal_file):
     with goal_file.open("r") as f:
         content = json.load(f)
+    print("You have the following ongoing goals:\n")
     for k,v in content.items():
-        print("You have the following ongoing goals:\n")
         print(f"{k}: {v}%\n")
 
 
