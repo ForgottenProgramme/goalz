@@ -1,10 +1,19 @@
 import click
 import json
 import os
+import time
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from rich.progress import Progress, BarColumn, TaskID, TextColumn
+
+
+progress = Progress(
+    TextColumn("[bold blue]{task.fields[goal_name]}", justify="right"),
+    BarColumn(bar_width=None),
+    "[progress.percentage]{task.completed}%",
+    "Completed",
+)
 
 
 def add_goal(goal_name: str, goal_file):
@@ -50,6 +59,7 @@ def update_progress(goal: dict, goal_file):
                 if content[goal] < 100:
                     content[goal]+=1
                     print(f"Progress updated for goal '{goal}'.\n")
+                    check_completed_goal(goal_file, content, goal)
                 print(f"Goal {content[goal]}% completed.")
                 with goal_file.open("w") as f:
                     json.dump(content, f)
@@ -80,6 +90,13 @@ def delete_goal(goal_name: str, goal_file):
         print("The goal file doesn't exist. Create one by adding new goals.\n")
 
 
+def check_completed_goal(goal_file, goal: dict, goal_name):
+    if goal[goal_name]==100:
+        print(f"Woohoo! You have completed your 100 days '{goal_name}' goal! 🎉\n")
+        delete_goal(goal_name, goal_file)
+        return
+
+
 def display_goal_list(goal_file):
     """Display all the goals in the goals file."""
 
@@ -89,9 +106,10 @@ def display_goal_list(goal_file):
         else:
             with goal_file.open("r") as f:
                 content = json.load(f)
-            print("You have the following ongoing goals:\n")
-            for k,v in content.items():
-                print(f"{k}: {v}%\n")
+            print("\nYou have the following ongoing goals:\n")
+            with progress:
+                for k,v in content.items():
+                    task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
     else:
         print("The goal file doesn't exist. Create one by adding new goals.\n")
 
