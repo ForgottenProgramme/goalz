@@ -1,22 +1,45 @@
 import click
 import json
 import os
+import time
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from rich.progress import Progress, BarColumn, TaskID, TextColumn
 
+# Customize rich.progress object
+progress = Progress(
+    TextColumn("[bold blue]{task.fields[goal_name]}", justify="right"),
+    BarColumn(bar_width=None),
+    "[progress.percentage]{task.completed}%",
+    "Completed",
+)
 
-def add_goal(goal_name: str, goal_file):
+#### Model ####
+
+def check_file_exists(goal_file) -> bool:
+    """Checks whether the goals.json file exists or not"""
+    if goal_file.exists():
+        return True
+    else:
+        print("Goals file doesn't exist. Create one by adding your first goal.\n")
+        return False
+
+
+def check_file_not_empty(goal_file) -> bool:
+    """Checks whether the goals.json file is non-empty or not"""
+    if os.stat(goal_file).st_size == 0:
+        print("Goal file is empty. Type `add <goal>` to add a new goal.\n")
+        return False
+    else:
+        return True
+
+
+def add_goal(goal_name: str, goal_file: Path):
     """Add new goals to the goals.json file. Create a new goals.json file if it doesn't already"""
 
-    if goal_file.exists():
-        if os.stat(goal_file).st_size == 0:
-            with goal_file.open("w") as f:
-                content={goal_name: 0}
-                json.dump(content,f)
-                print(f"Added goal '{goal_name}' to goals file.\n")
-        else:
+    if check_file_exists(goal_file):
+        if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
                 content=json.load(f)
                 if content.get(goal_name) is not None:
@@ -26,92 +49,75 @@ def add_goal(goal_name: str, goal_file):
                     content[goal_name]=0
                     with goal_file.open("w") as f:
                         json.dump(content,f)
-                    print(f"Added goal '{goal_name}' to goals file.\n")                        
+                    print(f"Added goal '{goal_name}' to goals file.\n")
+        else:
+            with goal_file.open("w") as f:
+                content={goal_name: 0}
+                json.dump(content,f)
+                print(f"Added goal '{goal_name}' to goals file.\n")                                    
     else:
         print("Creating a new goal file to record your goals.\n")
         goal = {goal_name: 0}
         with goal_file.open("w") as f:
             json.dump(goal, f)
         print(f"Added goal '{goal_name}' to the goals file.")
+    
 
-# All other funcs take "goal" as a str but this takes a dict. Need to change.
-def update_progress(goal: dict, goal_file):
+
+def update_progress(goal_name: str, goal_file):
     """Update goal progress by one step."""
 
-    if goal_file.exists():
-        if os.stat(goal_file).st_size == 0:
-            print("The goals file is empty. Add some new goals.\n")
-            return
-        else:
+    if check_file_exists(goal_file):
+        if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
                 content=json.load(f)      
-            if goal in content:
+            if content.get(goal_name) is not None:
                 print("Goal present in goals set.\n")
-                if content[goal] < 100:
-                    content[goal]+=1
-                    print(f"Progress updated for goal '{goal}'.\n")
-                print(f"Goal {content[goal]}% completed.")
+                if content[goal_name] < 100:
+                    content[goal_name]+=1
+                    print(f"Progress updated for goal '{goal_name}'.\n")
+                print(f"Goal {content[goal_name]}% completed.")
                 with goal_file.open("w") as f:
                     json.dump(content, f)
             else:
                 print("Goal not present in goals list. To add a new goal type 'add <goal>'")
-    else: 
-        print("The goal file doesn't exist. Create one by adding new goals.\n")
 
 
 def delete_goal(goal_name: str, goal_file):
     """Delete a goal from the goals file."""
 
-    if goal_file.exists():
-        if os.stat(goal_file).st_size == 0:
-            print("The goals file is empty. Add some new goals.\n")
-            return
-        else:
+    if check_file_exists(goal_file):
+        if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
                 content=json.load(f)
             if content.get(goal_name) is not None:
                 del content[goal_name]
+                print(content)
+                print("Deleted\n")
                 with goal_file.open("w") as f:
                     json.dump(content, f)
                 print("Goal deleted from goals file.\n")
             else:
                 print("Goal doesn't exist in the goals file.\n")
-    else:
-        print("The goal file doesn't exist. Create one by adding new goals.\n")
 
+
+#### View ####
 
 def display_goal_list(goal_file):
     """Display all the goals in the goals file."""
 
-    if goal_file.exists():
-        if os.stat(goal_file).st_size == 0:
-            print("The goals file is empty. Add some new goals.\n")
-        else:
+    if check_file_exists(goal_file):
+        if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
                 content = json.load(f)
-            print("You have the following ongoing goals:\n")
-            for k,v in content.items():
-                print(f"{k}: {v}%\n")
-    else:
-        print("The goal file doesn't exist. Create one by adding new goals.\n")
+            print("\nYou have the following ongoing goals:\n")
+            with progress:
+                for k,v in content.items():
+                    task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
+                
 
-# Maybe I should abstract away the checking for the existance of the goals file
+#### CLI/Controller ####
 
-# def check_goals_file_exist(goal_file) -> bool:
-#     if not goal_file.exists():
-#         print("There is no goals file. Create one by adding new goals.\n")
-#         return False
-#     else:
-#         return True
-    
-# def check_goals_file_not_empty(goal_file) -> bool:
-#     if os.stat(goal_file).st_size == 0:
-#         print("The goals file is empty. Add some new goals.\n")
-#         return False
-#     else:
-#         return True
-
-# CLI
 @click.command()
 @click.argument('action')
 
