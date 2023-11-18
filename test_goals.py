@@ -21,8 +21,8 @@ def temp_goals_file(tmp_path: Path) -> Path:
 
 def test_add_goal(temp_goals_file):
     goals.add_goal("D", temp_goals_file)
-    with temp_goals_file.open("r") as f:
-        content = json.load(f)
+    with temp_goals_file.open("r") as file:
+        content = json.load(file)
     assert content == {
         "A": 5,
         "B": 10,
