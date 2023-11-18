@@ -1,3 +1,3 @@
-# 100-days
+# Goalz
 
-A VERY simple python CLI tool to track your "100 Days" goals. 
+A VERY simple CLI tool written in Python to track your "100 Days" goals. 

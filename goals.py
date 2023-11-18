@@ -46,7 +46,7 @@ def check_file_not_empty(goal_file) -> bool:
                 if os.stat(goal_file).st_size == 0:
                     print("The goals file is empty. Type `add <goal>` to add a new goal.\n")
                 else:
-                    print(f"The following error was encountered while trying to read the goals file: {e}\n")
+                    print(f"The following error was encountered while trying to read the goals file: {e}\nIf you're unable to locate the file and fix the error, try deleting this goals file using `delete-file` and creating a new one using `add <goal>`.\n")
                 return False
 
 
@@ -90,9 +90,12 @@ def update_progress(goal_name: str, goal_file):
                 if content[goal_name] < 100:
                     content[goal_name]+=1
                     print(f"Progress updated for goal '{goal_name}'.\n")
+                    with goal_file.open("w") as f:
+                        json.dump(content, f)
                 print(f"Goal {content[goal_name]}% completed.")
-                with goal_file.open("w") as f:
-                    json.dump(content, f)
+                if content[goal_name]==100:
+                    print(f"Yay! You completed your 100 days goal: {goal_name}! 🎉🎉🎉\n")
+                    print("Moving this goal to completed.json file.\n")
             else:
                 print("Goal not present in goals list. To add a new goal type 'add <goal>'")
 
@@ -137,7 +140,14 @@ def display_goal_list(goal_file):
             with progress:
                 for k,v in content.items():
                     task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
-                
+
+# TODO: Create a function to show completed goals
+# def display_completed_goals():
+
+# TODO: Add function to move 100% completed goal to completed.json file   
+# def move_to_completed():
+
+# TODO: Add capitalization check i.e. Make A=a              
 
 #### CLI/Controller ####
 
