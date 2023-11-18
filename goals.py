@@ -1,3 +1,4 @@
+# Add a delete_goal_file function
 import click
 import json
 import os
@@ -28,11 +29,25 @@ def check_file_exists(goal_file) -> bool:
 
 def check_file_not_empty(goal_file) -> bool:
     """Checks whether the goals.json file is non-empty or not"""
-    if os.stat(goal_file).st_size == 0:
-        print("Goal file is empty. Type `add <goal>` to add a new goal.\n")
-        return False
-    else:
-        return True
+    # if os.stat(goal_file).st_size == 0:
+    #     print("Goal file is empty. Type `add <goal>` to add a new goal.\n")
+    #     return False
+    # else:
+    #     return True
+    with goal_file.open("r") as f:
+            try:
+                content=json.load(f)
+                if not content:
+                    print("No active goals. Type `add <goal>` to add a new goal.\n")
+                    return False
+                else:
+                    return True
+            except JSONDecodeError as e:
+                if os.stat(goal_file).st_size == 0:
+                    print("The goals file is empty. Type `add <goal>` to add a new goal.\n")
+                else:
+                    print(f"The following error was encountered while trying to read the goals file: {e}\n")
+                return False
 
 
 def add_goal(goal_name: str, goal_file: Path):
@@ -62,7 +77,6 @@ def add_goal(goal_name: str, goal_file: Path):
             json.dump(goal, f)
         print(f"Added goal '{goal_name}' to the goals file.")
     
-
 
 def update_progress(goal_name: str, goal_file):
     """Update goal progress by one step."""
