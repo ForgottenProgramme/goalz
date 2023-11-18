@@ -12,7 +12,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-__pycache__
+__pycache__/
 
 # Distribution / packaging
 .Python
