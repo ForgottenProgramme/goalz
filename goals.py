@@ -115,6 +115,15 @@ def delete_goal(goal_name: str, goal_file):
                 print("Goal doesn't exist in the goals file.\n")
 
 
+def delete_goal_file(goal_file):
+    """Delete the goals.json file"""
+    if check_file_exists(goal_file):
+        goal_file.unlink()
+        print("Deleted goals file. Create a new goals file by adding a goal.\n")
+    else:
+        print("Goals file doesn't exist. Nothing to delete.\n")
+
+
 #### View ####
 
 def display_goal_list(goal_file):
@@ -165,6 +174,9 @@ def main(action):
         print("Enter the goal to delete.\n")
         goal=input()
         delete_goal(goal, goal_file)
+    
+    if action=="delete-file":
+        delete_goal_file(goal_file)
 
 
 if __name__== "__main__":
