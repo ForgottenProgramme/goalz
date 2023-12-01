@@ -147,7 +147,6 @@ def display_goal_list(goal_file):
                     task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
 
 
-# TODO: Add function to move 100% completed goal to completed.json file   
 def move_to_completed(goal_name: str, completed_file: Path):
     """Moves completed goals to completed.json"""
 
@@ -161,7 +160,6 @@ def move_to_completed(goal_name: str, completed_file: Path):
             print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
 
 
-# TODO: Create a function to show completed goals
 def display_completed_goals(completed_file: Path):
     """Display completed goals in a table"""
 
