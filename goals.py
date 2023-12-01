@@ -7,6 +7,8 @@ import time
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from rich.progress import Progress, BarColumn, TaskID, TextColumn
+from rich.console import Console
+from rich.table import Table
 
 # Customize rich.progress object
 progress = Progress(
@@ -18,12 +20,12 @@ progress = Progress(
 
 #### Model ####
 
-def check_file_exists(goal_file) -> bool:
+def check_file_exists(file: Path) -> bool:
     """Checks whether the goals.json file exists or not"""
-    if goal_file.exists():
+    if file.exists():
         return True
     else:
-        print("Goals file doesn't exist. Create one by adding your first goal.\n")
+        print(f"{file} doesn't exist.\n")
         return False
 
 
@@ -38,7 +40,6 @@ def check_file_not_empty(goal_file) -> bool:
             try:
                 content=json.load(f)
                 if not content:
-                    print("No active goals. Type `add <goal>` to add a new goal.\n")
                     return False
                 else:
                     return True
@@ -53,6 +54,7 @@ def check_file_not_empty(goal_file) -> bool:
 def add_goal(goal_name: str, goal_file: Path):
     """Add new goals to the goals.json file. Create a new goals.json file if it doesn't already"""
 
+    goal_name=goal_name.capitalize()
     if check_file_exists(goal_file):
         if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
@@ -78,31 +80,34 @@ def add_goal(goal_name: str, goal_file: Path):
         print(f"Added goal '{goal_name}' to the goals file.")
     
 
-def update_progress(goal_name: str, goal_file):
+def update_progress(goal_name: str, goal_file, completed_file):
     """Update goal progress by one step."""
-
+    
+    goal_name=goal_name.capitalize()
     if check_file_exists(goal_file):
         if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
                 content=json.load(f)      
             if content.get(goal_name) is not None:
-                print("Goal present in goals set.\n")
-                if content[goal_name] < 100:
+                if content[goal_name] < 99:
                     content[goal_name]+=1
-                    print(f"Progress updated for goal '{goal_name}'.\n")
-                    with goal_file.open("w") as f:
-                        json.dump(content, f)
-                print(f"Goal {content[goal_name]}% completed.")
-                if content[goal_name]==100:
-                    print(f"Yay! You completed your 100 days goal: {goal_name}! 🎉🎉🎉\n")
-                    print("Moving this goal to completed.json file.\n")
+                    print(f"Progress updated for goal '{goal_name}'.\nGoal {content[goal_name]}% completed.\n")
+                else:
+                    print(f"Yay! You just completed your 100 days goal: {goal_name}! 🎉\nMoving this goal to completed.json file.\n")
+                    move_to_completed(goal_name, completed_file)
+                    del content[goal_name]
+
+                with goal_file.open("w") as f:
+                    json.dump(content, f)      
             else:
                 print("Goal not present in goals list. To add a new goal type 'add <goal>'")
-
+        else:
+            print("No active goals. Type `add <goal>` to add a new goal.\n")
 
 def delete_goal(goal_name: str, goal_file):
     """Delete a goal from the goals file."""
 
+    goal_name=goal_name.capitalize()
     if check_file_exists(goal_file):
         if check_file_not_empty(goal_file):
             with goal_file.open("r") as f:
@@ -141,13 +146,38 @@ def display_goal_list(goal_file):
                 for k,v in content.items():
                     task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
 
-# TODO: Create a function to show completed goals
-# def display_completed_goals():
 
 # TODO: Add function to move 100% completed goal to completed.json file   
-# def move_to_completed():
+def move_to_completed(goal_name: str, completed_file: Path):
+    """Moves completed goals to completed.json"""
 
-# TODO: Add capitalization check i.e. Make A=a              
+    goal_name=goal_name.capitalize()
+    if check_file_exists(completed_file):
+        with completed_file.open("a") as f:
+            f.write(f"\n{goal_name}")
+    else:
+        with completed_file.open("w") as f:
+            completed_file.write_text(goal_name)
+            print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
+
+
+# TODO: Create a function to show completed goals
+def display_completed_goals(completed_file: Path):
+    """Display completed goals in a table"""
+
+    if not check_file_exists(completed_file):
+        print("You have not completed any goals yet.\n")
+        return
+    table=Table(title="List of Completed Goals")
+    table.add_column("Goal Name", justify="left", no_wrap=True)
+    with completed_file.open("r") as f:
+        goals=f.readlines()
+    for goal in goals:
+        table.add_row(goal)
+
+    console=Console()
+    console.print(table)
+
 
 #### CLI/Controller ####
 
@@ -163,9 +193,11 @@ def main(action):
     update: To update an existing goal type 'update <goal>'.\n
     delete: To delete a goal type 'delete <goal>'.\n
     show-goals: To display a list of all your goals and their percentage completion.\n
+    delete-file: To delete the goal file.\n
     """
     
     goal_file = Path("goals.json")
+    completed_file = Path("completed.txt")
     
     if action=="add":
         print("Enter a new goal.\n")
@@ -175,7 +207,7 @@ def main(action):
     if action=="update":
         print("Enter the goal to update.\n")
         goal=input()
-        update_progress(goal, goal_file)
+        update_progress(goal, goal_file, completed_file)
 
     if action=="show-goals":
         display_goal_list(goal_file)
@@ -187,6 +219,10 @@ def main(action):
     
     if action=="delete-file":
         delete_goal_file(goal_file)
+
+    if action=="show-completed":
+        display_completed_goals(completed_file)
+
 
 
 if __name__== "__main__":
