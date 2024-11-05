@@ -1,15 +1,17 @@
-# Add a delete_goal_file function
+#!/Users/maheiramkhan/documents/github/conda/devenv/Darwin/arm64/envs/devenv-3.10-c/bin/python
+
 import click
 import json
 import os
-import time
+from datetime import datetime
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from rich.progress import Progress, BarColumn, TaskID, TextColumn
+from rich.progress import Progress, BarColumn, TextColumn
 from rich.console import Console
 from rich.table import Table
 
+# TODO Add time stamp to when the goal was completed. 
 # Customize rich.progress object
 progress = Progress(
     TextColumn("[bold blue]{task.fields[goal_name]}", justify="right"),
@@ -25,18 +27,19 @@ def check_file_exists(file: Path) -> bool:
     if file.exists():
         return True
     else:
-        print(f"{file} doesn't exist.\n")
+        # print(f"{file} doesn't exist.")
+        # this print statement is probably not required.
         return False
 
 
-def check_file_not_empty(goal_file) -> bool:
+def check_file_not_empty(file: Path) -> bool:
     """Checks whether the goals.json file is non-empty or not"""
     # if os.stat(goal_file).st_size == 0:
     #     print("Goal file is empty. Type `add <goal>` to add a new goal.\n")
     #     return False
     # else:
     #     return True
-    with goal_file.open("r") as f:
+    with file.open("r") as f:
             try:
                 content=json.load(f)
                 if not content:
@@ -44,10 +47,10 @@ def check_file_not_empty(goal_file) -> bool:
                 else:
                     return True
             except JSONDecodeError as e:
-                if os.stat(goal_file).st_size == 0:
-                    print("The goals file is empty. Type `add <goal>` to add a new goal.\n")
+                if os.stat(file).st_size == 0:
+                    print(f"The {file} file is empty.")
                 else:
-                    print(f"The following error was encountered while trying to read the goals file: {e}\nIf you're unable to locate the file and fix the error, try deleting this goals file using `delete-file` and creating a new one using `add <goal>`.\n")
+                    print(f"The following error was encountered while trying to read the file: {e}\nIf you're unable to locate the file and fix the error, try deleting this file using the `delete-file` command. You can create a new `goals.json` file by adding a new goal using `add <goal>`, a new `completed.json` file be created once you complete your first 100 days goal.\n")
                 return False
 
 
@@ -93,8 +96,9 @@ def update_progress(goal_name: str, goal_file, completed_file):
                     content[goal_name]+=1
                     print(f"Progress updated for goal '{goal_name}'.\nGoal {content[goal_name]}% completed.\n")
                 else:
-                    print(f"Yay! You just completed your 100 days goal: {goal_name}! 🎉\nMoving this goal to completed.json file.\n")
-                    move_to_completed(goal_name, completed_file)
+                    print(f"Yay! You just completed your 100 days goal: {goal_name}! 🎉\nMoving this goal to `completed.json` file.\n")
+                    current_date=datetime.now().date().strftime("%-d %b %Y")
+                    move_to_completed(goal_name, current_date, completed_file)
                     del content[goal_name]
 
                 with goal_file.open("w") as f:
@@ -147,17 +151,28 @@ def display_goal_list(goal_file):
                     task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
 
 
-def move_to_completed(goal_name: str, completed_file: Path):
+def move_to_completed(goal_name: str, date: str, completed_file: Path):
     """Moves completed goals to completed.json"""
 
     goal_name=goal_name.capitalize()
     if check_file_exists(completed_file):
-        with completed_file.open("a") as f:
-            f.write(f"\n{goal_name}")
+        if check_file_not_empty(completed_file):
+            with completed_file.open("r") as f:
+                content=json.load(f)
+                content[goal_name]= date
+                with completed_file.open("w") as f:
+                    json.dump(content, f)
+        else:
+            with completed_file.open("w") as f:
+                content= {goal_name: date}
+                json.dump(content, f)
+                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
     else:
         with completed_file.open("w") as f:
-            completed_file.write_text(goal_name)
-            print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
+                content= {goal_name: date}
+                json.dump(content, f)
+                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
+
 
 
 def display_completed_goals(completed_file: Path):
@@ -168,10 +183,11 @@ def display_completed_goals(completed_file: Path):
         return
     table=Table(title="List of Completed Goals")
     table.add_column("Goal Name", justify="left", no_wrap=True)
+    table.add_column("Date Completed", justify="center", no_wrap=True)
     with completed_file.open("r") as f:
-        goals=f.readlines()
-    for goal in goals:
-        table.add_row(goal)
+        goals=json.load(f)
+        for goal in goals:
+            table.add_row(goal, goals[goal])
 
     console=Console()
     console.print(table)
@@ -181,7 +197,6 @@ def display_completed_goals(completed_file: Path):
 
 @click.command()
 @click.argument('action')
-
 def main(action):
     """
     A CLI tool to create and track your "100 Day" goals.\n
@@ -190,12 +205,14 @@ def main(action):
     add: To add a new goal to your goals list, type 'add <goal>'.\n 
     update: To update an existing goal type 'update <goal>'.\n
     delete: To delete a goal type 'delete <goal>'.\n
-    show-goals: To display a list of all your goals and their percentage completion.\n
     delete-file: To delete the goal file.\n
+    show-goals: To display a list of all your goals and their percentage completion.\n
+    show-completed: To display a list of all completed goals.\n
+
     """
     
     goal_file = Path("goals.json")
-    completed_file = Path("completed.txt")
+    completed_file = Path("completed.json")
     
     if action=="add":
         print("Enter a new goal.\n")
