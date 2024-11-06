@@ -1,20 +1,14 @@
 # Goalz
 
-A VERY simple CLI tool written in Python to track your "100 Days" goals. 
+  A CLI tool to track your "100 Day" goals
 
-Make a new goal and stick to it for 100 days! 
+Options:
+  --help  Show this message and exit.
 
-Add a new goal to your goals list using:
-
-```goalz add <goal_name>```
-
-Update this goal by running:
-
-```goalz update <goal_name>```
-
-Each time you run the above command your goal is updated by 1%. 
-
-Once you complete a goal 100%, it is moved to the "completed goals" file. You can see the list of your completed goals by running:
-
-```goalz show-completed```
-
+Commands:
+  add             Add a new goal
+  delete          Delete a goal
+  restart         Delete everything and start anew
+  show-completed  Display all completed goals
+  show-goals      Display all current goals
+  update          Update the goal progress
