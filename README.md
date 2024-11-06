@@ -1,5 +1,4 @@
-# Goalz
-
+```
   A CLI tool to track your "100 Day" goals
 
 Options:
@@ -12,3 +11,4 @@ Commands:
   show-completed  Display all completed goals
   show-goals      Display all current goals
   update          Update the goal progress
+```
