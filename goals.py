@@ -11,7 +11,11 @@ from rich.progress import Progress, BarColumn, TextColumn
 from rich.console import Console
 from rich.table import Table
 
-# TODO Add time stamp to when the goal was completed. 
+#file name constants
+GOAL_FILE = Path("goals.json")
+COMPLETED_FILE = Path("completed.json")
+
+
 # Customize rich.progress object
 progress = Progress(
     TextColumn("[bold blue]{task.fields[goal_name]}", justify="right"),
@@ -20,25 +24,10 @@ progress = Progress(
     "Completed",
 )
 
-#### Model ####
-
-def check_file_exists(file: Path) -> bool:
-    """Checks whether the goals.json file exists or not"""
-    if file.exists():
-        return True
-    else:
-        # print(f"{file} doesn't exist.")
-        # this print statement is probably not required.
-        return False
-
 
 def check_file_not_empty(file: Path) -> bool:
     """Checks whether the goals.json file is non-empty or not"""
-    # if os.stat(goal_file).st_size == 0:
-    #     print("Goal file is empty. Type `add <goal>` to add a new goal.\n")
-    #     return False
-    # else:
-    #     return True
+
     with file.open("r") as f:
             try:
                 content=json.load(f)
@@ -54,42 +43,42 @@ def check_file_not_empty(file: Path) -> bool:
                 return False
 
 
-def add_goal(goal_name: str, goal_file: Path):
+def add_goal(goal_name: str):
     """Add new goals to the goals.json file. Create a new goals.json file if it doesn't already"""
 
     goal_name=goal_name.capitalize()
-    if check_file_exists(goal_file):
-        if check_file_not_empty(goal_file):
-            with goal_file.open("r") as f:
+    if GOAL_FILE.exists():
+        if check_file_not_empty(GOAL_FILE):
+            with GOAL_FILE.open("r") as f:
                 content=json.load(f)
                 if content.get(goal_name) is not None:
                     print(f"Goal '{goal_name}' already present in goal set. Update the goal instead.")
                     return
                 else:
                     content[goal_name]=0
-                    with goal_file.open("w") as f:
+                    with GOAL_FILE.open("w") as f:
                         json.dump(content,f)
                     print(f"Added goal '{goal_name}' to goals file.\n")
         else:
-            with goal_file.open("w") as f:
+            with GOAL_FILE.open("w") as f:
                 content={goal_name: 0}
                 json.dump(content,f)
                 print(f"Added goal '{goal_name}' to goals file.\n")                                    
     else:
         print("Creating a new goal file to record your goals.\n")
         goal = {goal_name: 0}
-        with goal_file.open("w") as f:
+        with GOAL_FILE.open("w") as f:
             json.dump(goal, f)
         print(f"Added goal '{goal_name}' to the goals file.")
     
 
-def update_progress(goal_name: str, goal_file, completed_file):
-    """Update goal progress by one step."""
+def update_progress(goal_name: str):
+    """Update goal progress by one step in the goals.json file."""
     
     goal_name=goal_name.capitalize()
-    if check_file_exists(goal_file):
-        if check_file_not_empty(goal_file):
-            with goal_file.open("r") as f:
+    if GOAL_FILE.exists():
+        if check_file_not_empty(GOAL_FILE):
+            with GOAL_FILE.open("r") as f:
                 content=json.load(f)      
             if content.get(goal_name) is not None:
                 if content[goal_name] < 99:
@@ -98,146 +87,150 @@ def update_progress(goal_name: str, goal_file, completed_file):
                 else:
                     print(f"Yay! You just completed your 100 days goal: {goal_name}! 🎉\nMoving this goal to `completed.json` file.\n")
                     current_date=datetime.now().date().strftime("%-d %b %Y")
-                    move_to_completed(goal_name, current_date, completed_file)
+                    move_to_completed(goal_name, current_date, COMPLETED_FILE)
                     del content[goal_name]
 
-                with goal_file.open("w") as f:
+                with GOAL_FILE.open("w") as f:
                     json.dump(content, f)      
             else:
                 print("Goal not present in goals list. To add a new goal type 'add <goal>'")
         else:
             print("No active goals. Type `add <goal>` to add a new goal.\n")
 
-def delete_goal(goal_name: str, goal_file):
-    """Delete a goal from the goals file."""
+
+def delete_goal(goal_name: str, GOAL_FILE: Path):
+    """Delete a goal from the goals.json file."""
 
     goal_name=goal_name.capitalize()
-    if check_file_exists(goal_file):
-        if check_file_not_empty(goal_file):
-            with goal_file.open("r") as f:
+    if GOAL_FILE.exists():
+        if check_file_not_empty(GOAL_FILE):
+            with GOAL_FILE.open("r") as f:
                 content=json.load(f)
             if content.get(goal_name) is not None:
                 del content[goal_name]
-                print(content)
-                print("Deleted\n")
-                with goal_file.open("w") as f:
+                with GOAL_FILE.open("w") as f:
                     json.dump(content, f)
-                print("Goal deleted from goals file.\n")
+                print("Goal deleted from goals list.\n")
             else:
-                print("Goal doesn't exist in the goals file.\n")
+                print("Goal doesn't exist in the goals list.\n")
 
 
-def delete_goal_file(goal_file):
-    """Delete the goals.json file"""
-    if check_file_exists(goal_file):
-        goal_file.unlink()
-        print("Deleted goals file. Create a new goals file by adding a goal.\n")
+def move_to_completed(goal_name: str, date: str):
+    """Moves completed goals to completed.json file."""
+
+    goal_name=goal_name.capitalize()
+    if COMPLETED_FILE.exists():
+        if check_file_not_empty(COMPLETED_FILE):
+            with COMPLETED_FILE.open("r") as f:
+                content=json.load(f)
+                content[goal_name]= date
+                with COMPLETED_FILE.open("w") as f:
+                    json.dump(content, f)
+        else:
+            with COMPLETED_FILE.open("w") as f:
+                content= {goal_name: date}
+                json.dump(content, f)
+                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
     else:
-        print("Goals file doesn't exist. Nothing to delete.\n")
+        with COMPLETED_FILE.open("w") as f:
+                content= {goal_name: date}
+                json.dump(content, f)
+                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
 
 
-#### View ####
+@click.group()
+def main():
+    """
+    A CLI tool to track your "100 Day" goals
+    """
+    pass
 
-def display_goal_list(goal_file):
-    """Display all the goals in the goals file."""
 
-    if check_file_exists(goal_file):
-        if check_file_not_empty(goal_file):
-            with goal_file.open("r") as f:
+@main.command()
+@click.argument("goal_name", type=str)
+def add(goal_name):
+    """
+    Add a new goal
+
+    GOAL_NAME: Name of the goal
+    """
+    add_goal(goal_name)
+
+
+@main.command()
+@click.argument("goal_name", type=str)
+def update(goal_name):
+    """
+    Update the goal progress
+
+    GOAL_NAME: Name of the goal
+    """
+
+    update_progress(goal_name)
+
+@main.command()
+@click.argument("goal_name", type=str)
+def delete(goal_name):
+    """
+    Delete a goal
+
+    GOAL_NAME: Name of the goal
+    """
+
+    delete_goal(goal_name)
+
+
+@main.command()
+def restart():
+    """
+    Delete everything and start anew
+    """
+
+    if GOAL_FILE.exists():
+        GOAL_FILE.unlink()
+    elif COMPLETED_FILE.exists():
+        COMPLETED_FILE.unlink()
+    else:
+        print("Nothing to delete.")
+
+
+@main.command()
+def show_goals():
+    """
+    Display all current goals
+    """
+
+    if GOAL_FILE.exists():
+        if check_file_not_empty(GOAL_FILE):
+            with GOAL_FILE.open("r") as f:
                 content = json.load(f)
             print("\nYou have the following ongoing goals:\n")
             with progress:
                 for k,v in content.items():
                     task_id = progress.add_task("goal", completed=int(v), total=100, goal_name=k)
+    else: 
+        print("You have no ongoing goals.\n")
 
 
-def move_to_completed(goal_name: str, date: str, completed_file: Path):
-    """Moves completed goals to completed.json"""
+@main.command()
+def show_completed():
+    """
+    Display all completed goals
+    """
 
-    goal_name=goal_name.capitalize()
-    if check_file_exists(completed_file):
-        if check_file_not_empty(completed_file):
-            with completed_file.open("r") as f:
-                content=json.load(f)
-                content[goal_name]= date
-                with completed_file.open("w") as f:
-                    json.dump(content, f)
-        else:
-            with completed_file.open("w") as f:
-                content= {goal_name: date}
-                json.dump(content, f)
-                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
-    else:
-        with completed_file.open("w") as f:
-                content= {goal_name: date}
-                json.dump(content, f)
-                # print("You completed your first 100 days goal! A new 'completed goals' file was created to store it.\n")
-
-
-
-def display_completed_goals(completed_file: Path):
-    """Display completed goals in a table"""
-
-    if not check_file_exists(completed_file):
+    if not COMPLETED_FILE.exists():
         print("You have not completed any goals yet.\n")
         return
     table=Table(title="List of Completed Goals")
     table.add_column("Goal Name", justify="left", no_wrap=True)
     table.add_column("Date Completed", justify="center", no_wrap=True)
-    with completed_file.open("r") as f:
+    with COMPLETED_FILE.open("r") as f:
         goals=json.load(f)
         for goal in goals:
             table.add_row(goal, goals[goal])
 
     console=Console()
     console.print(table)
-
-
-#### CLI/Controller ####
-
-@click.command()
-@click.argument('action')
-def main(action):
-    """
-    A CLI tool to create and track your "100 Day" goals.\n
-    \n
-    Usage:\n
-    add: To add a new goal to your goals list, type 'add <goal>'.\n 
-    update: To update an existing goal type 'update <goal>'.\n
-    delete: To delete a goal type 'delete <goal>'.\n
-    delete-file: To delete the goal file.\n
-    show-goals: To display a list of all your goals and their percentage completion.\n
-    show-completed: To display a list of all completed goals.\n
-
-    """
-    
-    goal_file = Path("goals.json")
-    completed_file = Path("completed.json")
-    
-    if action=="add":
-        print("Enter a new goal.\n")
-        goal=input()
-        add_goal(goal, goal_file)
-
-    if action=="update":
-        print("Enter the goal to update.\n")
-        goal=input()
-        update_progress(goal, goal_file, completed_file)
-
-    if action=="show-goals":
-        display_goal_list(goal_file)
-
-    if action=="delete":
-        print("Enter the goal to delete.\n")
-        goal=input()
-        delete_goal(goal, goal_file)
-    
-    if action=="delete-file":
-        delete_goal_file(goal_file)
-
-    if action=="show-completed":
-        display_completed_goals(completed_file)
-
 
 
 if __name__== "__main__":
