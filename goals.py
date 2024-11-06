@@ -18,7 +18,7 @@ COMPLETED_FILE = Path("completed.json")
 
 # Customize rich.progress object
 progress = Progress(
-    TextColumn("[bold blue]{task.fields[goal_name]}", justify="right"),
+    TextColumn("{task.fields[goal_name]}", justify="right"),
     BarColumn(bar_width=None),
     "[progress.percentage]{task.completed}%",
     "Completed",
@@ -87,7 +87,7 @@ def update_progress(goal_name: str):
                 else:
                     print(f"Yay! You just completed your 100 days goal: {goal_name}! 🎉\nMoving this goal to `completed.json` file.\n")
                     current_date=datetime.now().date().strftime("%-d %b %Y")
-                    move_to_completed(goal_name, current_date, COMPLETED_FILE)
+                    move_to_completed(goal_name, current_date)
                     del content[goal_name]
 
                 with GOAL_FILE.open("w") as f:
