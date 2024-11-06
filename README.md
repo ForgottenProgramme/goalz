@@ -1,3 +1,4 @@
+# GOALZ
 ```
   A CLI tool to track your "100 Day" goals
 
