@@ -1,4 +1,4 @@
-#!/Users/maheiramkhan/documents/github/conda/devenv/Darwin/arm64/envs/devenv-3.10-c/bin/python
+#!/usr/bin/env python
 
 import click
 import json
