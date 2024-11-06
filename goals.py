@@ -188,8 +188,10 @@ def restart():
 
     if GOAL_FILE.exists():
         GOAL_FILE.unlink()
+        print("Deleted all ongoing goals.")
     elif COMPLETED_FILE.exists():
         COMPLETED_FILE.unlink()
+        print("Deleted all completed goals.")
     else:
         print("Nothing to delete.")
 
