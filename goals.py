@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import click
 import json
 import os
 from datetime import datetime
+import rich_click as click
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
