@@ -1,12 +1,11 @@
 import pytest
 import json
-import os
 import goals
 from pathlib import Path
 
 
 @pytest.fixture()
-def temp_goals_file(tmp_path: Path) -> Path:
+def temp_goals_file(tmp_path) -> Path:
     GOAL_FILE = {
     "A": 5,
     "B": 10,
