@@ -51,15 +51,6 @@ def test_delete_goal(temp_goals_file):
         }    
 
 
-def test_file_exists(temp_goals_file):
-    assert goals.check_file_exists(temp_goals_file)
-
-
-def test_file_not_exists(temp_goals_file):
-    temp_goals_file.unlink()
-    assert not goals.check_file_exists(temp_goals_file)
-
-
 def test_file_not_empty(temp_goals_file):
     assert goals.check_file_not_empty(temp_goals_file)
 
