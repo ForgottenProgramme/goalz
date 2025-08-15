@@ -45,42 +45,42 @@ def check_file_not_empty(file: Path) -> bool:
             return False
 
 
-def add_goal(goal_name: str):
+def add_goal(goal_name: str, file: Path):
     """Add new goals to the {GOAL_FILE} file. Create a new {GOAL_FILE} file if it doesn't already"""
 
     goal_name=goal_name.capitalize()
-    if GOAL_FILE.exists():
-        if check_file_not_empty(GOAL_FILE):
-            with GOAL_FILE.open("r") as f:
+    if file.exists():
+        if check_file_not_empty(file):
+            with file.open("r") as f:
                 content=json.load(f)
                 if content.get(goal_name) is not None:
                     print(f"Goal '{goal_name}' already present in goal set. Update the goal instead.")
                     return
                 else:
                     content[goal_name]=0
-                    with GOAL_FILE.open("w") as f:
+                    with file.open("w") as f:
                         json.dump(content,f)
                     print(f"Added goal '{goal_name}' to goals file.\n")
         else:
-            with GOAL_FILE.open("w") as f:
+            with file.open("w") as f:
                 content={goal_name: 0}
                 json.dump(content,f)
                 print(f"Added goal '{goal_name}' to goals file.\n")                                    
     else:
         print("Creating a new goal file to record your goals.\n")
         goal = {goal_name: 0}
-        with GOAL_FILE.open("w") as f:
+        with file.open("w") as f:
             json.dump(goal, f)
-        print(f"Added goal '{goal_name}' to the {GOAL_FILE} file.")
+        print(f"Added goal '{goal_name}' to the {file} file.")
     
 
-def update_progress(goal_name: str):
+def update_progress(goal_name: str, file: Path):
     """Update goal progress by one step in the {GOAL_FILE} file."""
     
     goal_name=goal_name.capitalize()
-    if GOAL_FILE.exists():
-        if check_file_not_empty(GOAL_FILE):
-            with GOAL_FILE.open("r") as f:
+    if file.exists():
+        if check_file_not_empty(file):
+            with file.open("r") as f:
                 content=json.load(f)      
             if content.get(goal_name) is not None:
                 if content[goal_name] < 99:
@@ -92,7 +92,7 @@ def update_progress(goal_name: str):
                     move_to_completed(goal_name, current_date)
                     del content[goal_name]
 
-                with GOAL_FILE.open("w") as f:
+                with file.open("w") as f:
                     json.dump(content, f)      
             else:
                 print("Goal not present in goals list. Type `add <goal>` to add a new goal.\n")
@@ -100,26 +100,26 @@ def update_progress(goal_name: str):
             print("No active goals. Type `add <goal>` to add a new goal.\n")
 
 
-def delete_goal(goal_name: str):
+def delete_goal(goal_name: str, file:Path):
     """Delete a goal from the {GOAL_FILE} file."""
 
     goal_name=goal_name.capitalize()
-    if not GOAL_FILE.exists():
+    if not file.exists():
         print("No active goals. Type `add <goal>` to add a new goal.\n")
         return
     else:
-        if not check_file_not_empty(GOAL_FILE):
+        if not check_file_not_empty(file):
             print("Goal not present in goals list. Type `add <goal>` to add a new goal.\n")
             return 
         else:
-            with GOAL_FILE.open("r") as f:
+            with file.open("r") as f:
                 content=json.load(f)
             if content.get(goal_name) is None:
                 print("Goal doesn't exist in the goals list.\n")
                 return
             else:
                 del content[goal_name]
-                with GOAL_FILE.open("w") as f:
+                with file.open("w") as f:
                     json.dump(content, f)
                 print("Goal deleted from goals list.\n")
                 
@@ -165,8 +165,7 @@ def add(goal_name):
 
     GOAL_NAME: Name of the goal
     """
-    add_goal(goal_name)
-
+    add_goal(goal_name, GOAL_FILE)
 
 @main.command()
 @click.argument("goal_name", type=str)
