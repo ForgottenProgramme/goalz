@@ -1,0 +1,26 @@
+name: Bug Report
+description: Create a bug report.
+labels:
+  - type::bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Because processing new bug reports is time-consuming, we would like to ask you to fill out the following form to the best of your ability and as completely as possible.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      description: Please confirm and check all of the following options.
+      options:
+        - label: I added a descriptive title
+          required: true
+        - label: I searched open reports and couldn't find a duplicate
+          required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What should have happened instead? Please provide as many details as possible. The more information provided, the more likely we are able to replicate your problem and offer a solution.
+    validations:
+      required: true
